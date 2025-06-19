@@ -1,40 +1,33 @@
-from sentence_transformers import SentenceTransformer
+from typing import List, Optional
 import numpy as np
-from typing import List
 import torch
+from sentence_transformers import SentenceTransformer
 
 
 class EmbeddingHandler:
-    def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
+    def __init__(self, model_name: str = 'BAAI/bge-base-en-v1.5', device: Optional[str] = None):
         self.model_name = model_name
+        self.device = device or (
+            'mps' if torch.backends.mps.is_available() else 'cpu')
         self.model = None
         self.load_model()
 
     def load_model(self):
-        """Load the embedding model"""
         try:
-            # Use MPS (Metal Performance Shaders) for Apple Silicon
-            device = 'mps' if torch.backends.mps.is_available() else 'cpu'
-            self.model = SentenceTransformer(self.model_name, device=device)
-            print(f"Embedding model loaded on {device}")
+            self.model = SentenceTransformer(
+                self.model_name, device=self.device)
+            print(f"Embedding model loaded on {self.device}")
         except Exception as e:
-            print(f"Error loading embedding model: {e}")
-            # Fallback to CPU
+            print(f"Error loading embedding model on {self.device}: {e}")
             self.model = SentenceTransformer(self.model_name, device='cpu')
 
     def encode_texts(self, texts: List[str]) -> np.ndarray:
-        """Generate embeddings for a list of texts"""
-        if not self.model:
-            raise Exception("Embedding model not loaded")
-
-        embeddings = self.model.encode(
-            texts,
-            batch_size=32,
-            show_progress_bar=True,
-            convert_to_numpy=True
-        )
-        return embeddings
+        """Embed documents (use instruction format if needed)"""
+        texts = [
+            f"Represent this document for retrieval: {text}" for text in texts]
+        return self.model.encode(texts, batch_size=32, show_progress_bar=True, convert_to_numpy=True)
 
     def encode_query(self, query: str) -> np.ndarray:
-        """Generate embedding for a single query"""
-        return self.model.encode([query])[0]
+        """Embed query with instruction"""
+        query = f"Represent this query for retrieval: {query}"
+        return self.model.encode([query], convert_to_numpy=True)[0]

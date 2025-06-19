@@ -92,7 +92,12 @@ def main():
                     # Process PDF
                     pdf_processor = components['pdf_processor']
                     text = pdf_processor.extract_text_from_pdf(tmp_path)
-                    chunks = pdf_processor.chunk_text(text)
+                    chunks_with_metadata = pdf_processor.chunk_text(
+                        text)  # returns list of dicts
+                    chunks = [chunk["text"] if isinstance(
+                        chunk, dict) else chunk for chunk in chunks_with_metadata]
+                    metadatas = [chunk["metadata"] if isinstance(
+                        chunk, dict) and "metadata" in chunk else {} for chunk in chunks_with_metadata]
 
                     st.sidebar.write(f"📊 Extracted {len(chunks)} text chunks")
 
@@ -103,7 +108,8 @@ def main():
                     # Store in vector database
                     components['vector_store'].add_documents(
                         texts=chunks,
-                        embeddings=embeddings.tolist()
+                        embeddings=embeddings.tolist(),
+                        metadatas=metadatas
                     )
 
                     # Clean up
