@@ -112,3 +112,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [ChromaDB](https://www.trychroma.com/)
 - [Meta Llama Models](https://huggingface.co/meta-llama)
+
+## Bugfixing
+
+# To fix issue -> Error processing PDF: Error reading PDF with Docling: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (\_ssl.c:1028)>
+
+```bash
+pip install --upgrade certifi
+export SSL_CERT_FILE=$(python -m certifi)
+export REQUESTS_CA_BUNDLE=$(python -m certifi) # Also good for requests library
+```
